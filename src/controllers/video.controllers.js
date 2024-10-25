@@ -2,8 +2,20 @@ const catchError = require('../utils/catchError');
 const Video = require('../models/Video');
 
 const getAll = catchError(async (req, res) => {
-    const results = await Video.findAll();
-    return res.json(results);
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Video.findAndCountAll({
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+    });
+
+    return res.json({
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: parseInt(page),
+        videos: rows
+    });
 });
 
 const create = catchError(async (req, res) => {
@@ -22,6 +34,7 @@ const videoToDB = async (videoData) => {
                 title: videoData.title,
                 path: videoData.path,
                 size: videoData.size,
+                category: videoData.category
             });
             return video;
         }
